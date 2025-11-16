@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>超神演算法－深度優先搜尋DFS與廣度優先搜尋BFS展演系統</title>
+    <meta name="description" content="結合視覺化動畫、數據結構基礎、理論分析與多語言程式碼實作，深入理解 DFS 與 BFS 演算法。">
+    
+    <!-- 引入 Font Awesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <style>
+        /* --- 基礎樣式 --- */
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, '微軟正黑體', 'Microsoft JhengHei', sans-serif;
+            line-height: 1.8; 
+            margin: 0;
+            padding: 0;
+            background-color: #f0f4f8;
+            color: #2c3e50;
+        }
+        header {
+            background-color: #0b2240;
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        h1 { margin: 0; font-size: 2.4em; letter-spacing: 3px; }
+        nav a { color: white; text-decoration: none; margin: 0 15px; font-weight: bold; transition: color 0.3s; padding: 5px 0; }
+        nav a:hover { color: #2ecc71; border-bottom: 2px solid #2ecc71; }
+
+        /* --- 內容區塊 --- */
+        main { max-width: 1100px; margin: 40px auto; padding: 0 20px; }
+        section {
+            background-color: white;
+            padding: 35px;
+            margin-bottom: 35px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        h2 { color: #e74c3c; border-bottom: 4px solid #e74c3c; padding-bottom: 10px; margin-top: 0; font-size: 2em; }
+        h3 { color: #3498db; margin-top: 30px; border-left: 6px solid #3498db; padding-left: 15px; font-size: 1.5em; }
+        
+        /* --- 輔助教學區 --- */
+        .analogy { background-color: #ecf0f1; border-left: 5px solid #2ecc71; padding: 15px; border-radius: 8px; margin: 20px 0; font-style: italic; }
+        .data-structure-box { background-color: #fff0f5; border: 2px dashed #ff69b4; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: center; }
+        .complexity { background-color: #ffebcc; border-left: 5px solid #f39c12; font-weight: bold; padding: 15px; border-radius: 8px; margin: 20px 0; }
+        .application-example { border: 1px solid #ddd; padding: 20px; margin: 20px 0; border-radius: 8px; background-color: #f9f9f9; }
+
+        /* --- 視覺化區塊 --- */
+        .visualization-area { display: flex; flex-direction: column; align-items: center; padding: 20px; background-color: #fff8e1; border: 3px solid #f39c12; border-radius: 10px; }
+        #graphCanvas { border: 1px solid #aaa; background-color: white; margin-bottom: 20px; }
+        .controls { display: flex; gap: 15px; margin-bottom: 20px; align-items: center; }
+        .controls button { padding: 10px 20px; font-size: 1.1em; cursor: pointer; border: none; border-radius: 5px; transition: background-color 0.3s; }
+        #startDFS { background-color: #e74c3c; color: white; }
+        #startBFS { background-color: #3498db; color: white; }
+        #nextStep { background-color: #2ecc71; color: white; }
+        #resetBtn { background-color: #95a5a6; color: white; }
+        .status-panel { width: 100%; padding: 15px; background-color: #ecf0f1; border-radius: 5px; font-family: monospace; text-align: left; }
+        
+        /* --- 比較表格樣式 --- */
+        #comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        #comparison-table th, #comparison-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        #comparison-table th {
+            background-color: #34495e;
+            color: white;
+            font-weight: bold;
+        }
+        #comparison-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        /* --- 吉祥物樣式 --- */
+        #mascot-container { position: fixed; bottom: 20px; left: 20px; z-index: 2000; cursor: pointer; }
+        #mascot-container img {
+            width: 120px; height: 120px; 
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4)); 
+            transition: transform 0.1s, filter 0.3s;
+        }
+        #mascot-container:hover img { 
+            filter: 
+                drop-shadow(0 0 5px #ff00ff) 
+                drop-shadow(0 0 15px #00ffff)
+                drop-shadow(0 0 25px #ff00ff)
+                drop-shadow(0 0 35px #00ffff);
+            transform: scale(1.1); 
+            animation: shake 0.5s infinite;
+        }
+        @keyframes shake { 0% { transform: translate(1px, 1px) rotate(0deg); } 100% { transform: translate(1px, -2px) rotate(-1deg); } }
+        
+        footer {
+            text-align: center; padding: 15px 0; background-color: #34495e; color: #bdc3c7; margin-top: 50px; font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>超神演算法－深度優先搜尋DFS與廣度優先搜尋BFS展演系統</h1>
+        <nav>
+            <a href="#intro"><i class="fas fa-info-circle"></i> 簡介</a> |
+            <a href="#datastructures"><i class="fas fa-database"></i> 數據結構</a> |
+            <a href="#visualization"><i class="fas fa-eye"></i> 視覺化</a> |
+            <a href="#theory"><i class="fas fa-flask"></i> 理論與應用</a>
+        </nav>
+    </header>
+
+    <main>
+        
+        <!-- 1. 系統簡介 -->
+        <section id="intro">
+            <h2><i class="fas fa-hand-sparkles"></i> 演算法探索的起點：圖形遍歷</h2>
+            <p>圖形遍歷 (Graph Traversal) 是系統化地訪問圖中所有節點的過程。DFS (Depth-First Search) 和 BFS (Breadth-First Search) 是實現這一目標的兩種基本且強大的方法。</p>
+        </section>
+
+        <!-- 2. 數據結構基礎 -->
+        <section id="datastructures">
+            <h2><i class="fas fa-boxes"></i> 預備知識：Stack (LIFO) 與 Queue (FIFO)</h2>
+            <p>DFS 和 BFS 的運作方式，完全取決於它們用來儲存待訪問節點的數據結構。</p>
+
+            <div class="data-structure-box">
+                <h3>堆疊 (Stack)：後進先出 (LIFO)</h3>
+                <p><strong>比喻：</strong> 像一疊盤子。最後放進去的 (L) 總是第一個被拿走 (F)。</p>
+                <div class="ds-container">
+                    <div class="stack-viz">
+                        <span class="ds-item" style="background-color: #2ecc71;">C (L) <i class="fas fa-arrow-down"></i></span>
+                        <span class="ds-item">B</span>
+                        <span class="ds-item" style="background-color: #f39c12;">A (F)</span>
+                    </div>
+                </div>
+                <p><strong>DFS 核心：</strong> 利用 LIFO 特性，保證演算法會不斷探索當前路徑的深處。</p>
+            </div>
+            
+            <div class="data-structure-box">
+                <h3><i class="fas fa-users-line" style="color:#3498db;"></i> 佇列 (Queue)：先進先出 (FIFO)</h3>
+                <p><strong>比喻：</strong> 像排隊買飲料。最先排隊的 (F) 總是第一個買到飲料的 (F)。</p>
+                <div class="ds-container">
+                    <div class="queue-viz">
+                        <span class="ds-item" style="background-color: #e74c3c;">A (F) <i class="fas fa-arrow-right"></i></span>
+                        <span class="ds-item">B</span>
+                        <span class="ds-item" style="background-color: #2ecc71;"><i class="fas fa-arrow-left"></i> C (L)</span>
+                    </div>
+                </div>
+                <p><strong>BFS 核心：</strong> 利用 FIFO 特性，確保按層次、按距離的順序搜索，優先處理距離近的節點。</p>
+            </div>
+        </section>
+
+        <!-- 3. 視覺化展演區 -->
+        <section id="visualization">
+            <h2><i class="fas fa-project-diagram"></i> 視覺化實踐：無向圖的遍歷</h2>
+
+            <p>下方圖形與您的範例圖一致 (節點 A 到 F)。請選擇起點和演算法，並點擊「下一步」手動觀察遍歷過程。</p>
+            
+            <div class="visualization-area">
+                
+                <div class="controls">
+                    <!-- 選擇起點 (包含所有節點 A-F) -->
+                    <label for="startNodeSelect"><i class="fas fa-location-arrow"></i> 選擇起點:</label>
+                    <select id="startNodeSelect">
+                        <option value="A">A</option>
+                        <option value="B">B</option>
+                        <option value="C">C</option>
+                        <option value="D">D</option>
+                        <option value="E">E</option>
+                        <option value="F">F</option>
+                    </select>
+                    
+                    <button id="startDFS" onclick="startVisualization('DFS')"><i class="fas fa-angle-double-down"></i> 初始化 DFS</button>
+                    <button id="startBFS" onclick="startVisualization('BFS')"><i class="fas fa-expand-arrows-alt"></i> 初始化 BFS</button>
+                    <button id="nextStep" onclick="stepAlgorithm()" disabled><i class="fas fa-forward"></i> 下一步動畫</button>
+                    <button id="resetBtn" onclick="resetGraph()"><i class="fas fa-sync-alt"></i> 重置圖形</button>
+                </div>
+
+                <canvas id="graphCanvas" width="800" height="450">很抱歉，您的瀏覽器不支持 Canvas 繪圖。</canvas>
+
+                <div class="status-panel">
+                    <strong>當前演算法：</strong> <span id="currentAlgo">N/A</span><br>
+                    <strong>當前狀態：</strong> <span id="currentStatus">請先選擇一個演算法並點擊「下一步」開始遍歷。</span><br>
+                    <strong>訪問順序：</strong> <span id="visitOrder"></span><hr>
+                    <strong>核心數據結構：</strong> <span id="dataStructure">[]</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. 理論與應用 -->
+        <section id="theory">
+            <h2><i class="fas fa-brain"></i> 理論與應用：DFS vs BFS 完整比較</h2>
+            
+            <h3><i class="fas fa-table"></i> 深度優先搜尋 (DFS) 與 廣度優先搜尋 (BFS) 比較表</h3>
+            <table id="comparison-table">
+                <thead>
+                    <tr>
+                        <th>特徵</th>
+                        <th>深度優先搜尋 (DFS)</th>
+                        <th>廣度優先搜尋 (BFS)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>核心數據結構</strong></td>
+                        <td>堆疊 (Stack) 或 遞迴 (LIFO)</td>
+                        <td>佇列 (Queue) (FIFO)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>搜索策略</strong></td>
+                        <td>深入探險：盡可能沿著一條路徑走到最底。</td>
+                        <td>層次擴散：先訪問所有距離近的節點，再處理距離遠的。</td>
+                    </tr>
+                    <tr>
+                        <td><strong>時間複雜度</strong></td>
+                        <td>O(V + E)</td>
+                        <td>O(V + E)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>空間複雜度 (記憶體)</strong></td>
+                        <td>O(深度) 或 O(V)。在樹狀或深層圖中更節省空間。</td>
+                        <td>O(V)。在寬廣圖中，佇列可能需要儲存大量節點，較耗空間。</td>
+                    </tr>
+                    <tr>
+                        <td><strong>最短路徑保證</strong></td>
+                        <td>否。</td>
+                        <td>是 (在無權圖中)。</td>
+                    </tr>
+                    <tr>
+                        <td><strong>主要應用</strong></td>
+                        <td>拓撲排序、迷宮求解、連通分量、生成樹。</td>
+                        <td>尋找最短距離、網路廣播、層次分析。</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <h3>應用案例解析</h3>
+            <div class="application-example">
+                <h4><i class="fas fa-door-open"></i> DFS 應用：電子迷宮求解</h4>
+                <p>當你在設計一個迷宮遊戲時，DFS 能迅速找到一條從起點到終點的路徑。它的優勢在於：不用記住太多岔路口（省空間），只需一條路走到底。</p>
+            </div>
+            
+            <div class="application-example">
+                <h4><i class="fas fa-route"></i> BFS 應用：交通導航的最少轉彎</h4>
+                <p>在城市地圖中，如果每條路段距離相同，BFS 總是能先找到需要最少轉彎次數（最短距離層次）的路線。這是因為 BFS 確保了它不會錯過任何距離更近的節點。</p>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- 吉祥物區塊 -->
+    <div id="mascot-container">
+        <img src="image/LiyuChillGuy.svg" alt="吉祥物：LiyuChillGuy">
+    </div>
+
+    <!-- 頁面腳註 -->
+    <footer>
+        <p>超神演算法展演系統專供黃瀚葳學習之極致完整版</p>
+        <p>Copyright © Liyuchiutiger Gongminshen</p>
+    </footer>
+
+    <!-- JavaScript 視覺化邏輯 (使用修正後的圖結構) -->
+    <script>
+        const canvas = document.getElementById('graphCanvas');
+        const ctx = canvas.getContext('2d');
+        const NODE_RADIUS = 25;
+
+        // 圖結構 (根據提供的圖片定義座標和連接)
+        const graphData = {
+            'A': { x: 100, y: 200, neighbors: ['B', 'C'] },
+            'B': { x: 250, y: 100, neighbors: ['A', 'C', 'D'] },
+            'C': { x: 250, y: 300, neighbors: ['A', 'B', 'D', 'E'] },
+            'D': { x: 450, y: 100, neighbors: ['B', 'C', 'E', 'F'] },
+            'E': { x: 450, y: 300, neighbors: ['C', 'D'] },
+            'F': { x: 650, y: 100, neighbors: ['D'] }
+        };
+        
+        let visited = new Set();
+        let traversalQueue = []; 
+        let currentAlgorithm = null;
+        let visitOrder = [];
+
+        // 顏色定義
+        const COLOR_DEFAULT = '#3498db'; 
+        const COLOR_VISITED = '#2ecc71'; 
+        const COLOR_ACTIVE = '#e74c3c'; 
+        const COLOR_QUEUE = '#f39c12'; 
+
+        /* --- 繪圖函數 --- */
+        function drawNode(key, stateColor) {
+            const node = graphData[key];
+            ctx.beginPath();
+            ctx.arc(node.x, node.y, NODE_RADIUS, 0, Math.PI * 2);
+            ctx.fillStyle = stateColor;
+            ctx.fill();
+            ctx.strokeStyle = '#2c3e50';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            ctx.fillStyle = 'white';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.font = 'bold 16px Arial';
+            ctx.fillText(key, node.x, node.y);
+        }
+
+        function drawEdge(nodeKey1, nodeKey2) {
+            const n1 = graphData[nodeKey1];
+            const n2 = graphData[nodeKey2];
+            ctx.beginPath();
+            ctx.moveTo(n1.x, n1.y);
+            ctx.lineTo(n2.x, n2.y);
+            ctx.strokeStyle = '#bdc3c7';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+
+        function drawGraph() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 繪製邊 (無向圖，只繪製一次)
+            const drawnEdges = new Set();
+            for (const key in graphData) {
+                graphData[key].neighbors.forEach(neighborKey => {
+                    const edgeId = [key, neighborKey].sort().join('-');
+                    if (!drawnEdges.has(edgeId)) {
+                        drawEdge(key, neighborKey);
+                        drawnEdges.add(edgeId);
+                    }
+                });
+            }
+
+            // 繪製節點
+            for (const key in graphData) {
+                let color = COLOR_DEFAULT;
+                if (visited.has(key)) {
+                    color = COLOR_VISITED;
+                }
+                
+                if (traversalQueue.includes(key)) {
+                    color = COLOR_QUEUE;
+                }
+
+                let nextNode = traversalQueue.length > 0 ? 
+                               (currentAlgorithm === 'BFS' ? traversalQueue[0] : traversalQueue[traversalQueue.length - 1]) : null;
+
+                if (key === nextNode) {
+                    color = COLOR_ACTIVE;
+                }
+
+                drawNode(key, color);
+            }
+        }
+        
+        /* --- 狀態更新函數 --- */
+        function updateStatus() {
+            document.getElementById('currentAlgo').innerText = currentAlgorithm || 'N/A';
+            document.getElementById('currentStatus').innerText = 
+                traversalQueue.length > 0 ? '準備處理下一個節點，請點擊「下一步」' : (currentAlgorithm ? `${currentAlgorithm} 遍歷完成！` : '請先選擇一個演算法。');
+            
+            let displayQueue = [...traversalQueue]; 
+
+            if (currentAlgorithm === 'DFS') {
+                document.getElementById('dataStructure').innerHTML = 
+                    `<strong>Stack (LIFO)</strong>: [${displayQueue.reverse().join(', ')}] <br>(下一個彈出: ${traversalQueue[traversalQueue.length - 1] || 'N/A'})`;
+            } else if (currentAlgorithm === 'BFS') {
+                 document.getElementById('dataStructure').innerHTML = 
+                    `<strong>Queue (FIFO)</strong>: [${displayQueue.join(', ')}] <br>(下一個出隊: ${traversalQueue[0] || 'N/A'})`;
+            } else {
+                 document.getElementById('dataStructure').innerHTML = '[]';
+            }
+            
+            document.getElementById('visitOrder').innerText = visitOrder.join(' → ');
+            drawGraph();
+            
+            // 啟用/禁用下一步按鈕
+            document.getElementById('nextStep').disabled = traversalQueue.length === 0;
+            if (currentAlgorithm === null) {
+                 document.getElementById('nextStep').disabled = true;
+            }
+        }
+
+        /* --- 步進函數 (手動控制) --- */
+        function stepAlgorithm() {
+            if (traversalQueue.length === 0) {
+                updateStatus();
+                return;
+            }
+
+            let currentNodeKey;
+            
+            if (currentAlgorithm === 'BFS') {
+                currentNodeKey = traversalQueue.shift(); 
+            } else if (currentAlgorithm === 'DFS') {
+                currentNodeKey = traversalQueue.pop(); 
+            }
+            
+            if (visited.has(currentNodeKey)) {
+                 updateStatus(); 
+                 return;
+            }
+
+            visited.add(currentNodeKey);
+            visitOrder.push(currentNodeKey);
+
+            const neighbors = graphData[currentNodeKey].neighbors;
+            
+            // 找出未訪問且不在隊列/堆棧中的鄰居，並按字母序排序
+            const unvisitedNeighbors = neighbors
+                .filter(n => !visited.has(n) && !traversalQueue.includes(n))
+                .sort(); 
+
+            if (currentAlgorithm === 'DFS') {
+                 // LIFO 策略：將鄰居逆序推入 Stack (確保字母序第一個先被 pop)
+                 unvisitedNeighbors.slice().reverse().forEach(neighborKey => { 
+                    traversalQueue.push(neighborKey);
+                });
+            } else if (currentAlgorithm === 'BFS') {
+                // FIFO 策略：將鄰居順序加入 Queue
+                unvisitedNeighbors.forEach(neighborKey => {
+                    traversalQueue.push(neighborKey);
+                });
+            }
+
+            updateStatus();
+        }
+
+        /* --- 控制函數 --- */
+        function resetGraph() {
+            visited = new Set();
+            traversalQueue = [];
+            currentAlgorithm = null;
+            visitOrder = [];
+            document.getElementById('currentAlgo').innerText = 'N/A';
+            document.getElementById('currentStatus').innerText = '已重置。請選擇一個演算法。';
+            document.getElementById('dataStructure').innerHTML = '[]';
+            document.getElementById('visitOrder').innerText = '';
+            document.getElementById('nextStep').disabled = true;
+            drawGraph();
+        }
+
+        function startVisualization(algorithm) {
+            resetGraph();
+            currentAlgorithm = algorithm;
+            
+            const startNode = document.getElementById('startNodeSelect').value;
+            
+            traversalQueue.push(startNode);
+            document.getElementById('nextStep').disabled = false;
+            
+            updateStatus();
+        }
+        
+        window.onload = drawGraph;
+    </script>
+</body>
+</html>
