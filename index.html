@@ -3,275 +3,398 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>超神系列－深度優先搜尋DFS與廣度優先搜尋BFS展演系統</title>
-    <meta name="description" content="結合視覺化動畫、數據結構基礎、理論分析與多語言程式碼實作，深入理解 DFS 與 BFS 演算法。">
+    <title>超神系列 | DFS 與 BFS 演算法展演系統</title>
+    <meta name="description" content="超神系列：深度優先搜尋與廣度優先搜尋的視覺化駭客風格教學。">
     
-    <!-- 引入 Font Awesome CDN -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- 引入 Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- 引入 Google Fonts (科幻字體) -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Noto+Sans+TC:wght@300;500;700&display=swap" rel="stylesheet">
     
     <style>
-        /* --- 基礎樣式 --- */
+        /* --- 變數定義：賽博龐克配色 (與雜湊網站統一) --- */
+        :root {
+            --bg-color: #0a0b1e;
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --neon-blue: #00f3ff;
+            --neon-purple: #bc13fe;
+            --neon-green: #0aff68;
+            --neon-orange: #ff9f43;
+            --neon-red: #ff4757;
+            --text-main: #ffffff;
+            --text-muted: #a0a0b0;
+        }
+
+        * { box-sizing: border-box; }
+
         body {
-            font-family: 'Helvetica Neue', Helvetica, Arial, '微軟正黑體', 'Microsoft JhengHei', sans-serif;
-            line-height: 1.8; 
+            font-family: 'Noto Sans TC', sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #f0f4f8;
-            color: #2c3e50;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            /* 動態網格背景 */
+            background-image: 
+                linear-gradient(rgba(0, 243, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 243, 255, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            animation: moveGrid 20s linear infinite;
+            overflow-x: hidden;
         }
+
+        @keyframes moveGrid {
+            0% { background-position: 0 0; }
+            100% { background-position: 40px 40px; }
+        }
+
+        /* --- Header --- */
         header {
-            background-color: #0b2240;
-            color: white;
+            background: rgba(10, 11, 30, 0.9);
+            backdrop-filter: blur(10px);
             padding: 20px 0;
             text-align: center;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
             position: sticky;
             top: 0;
             z-index: 1000;
-        }
-        h1 { margin: 0; font-size: 2.4em; letter-spacing: 3px; }
-        nav a { color: white; text-decoration: none; margin: 0 15px; font-weight: bold; transition: color 0.3s; padding: 5px 0; }
-        nav a:hover { color: #2ecc71; border-bottom: 2px solid #2ecc71; }
-
-        /* --- 內容區塊 --- */
-        main { max-width: 1100px; margin: 40px auto; padding: 0 20px; }
-        section {
-            background-color: white;
-            padding: 35px;
-            margin-bottom: 35px;
-            border-radius: 12px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        }
-        h2 { color: #e74c3c; border-bottom: 4px solid #e74c3c; padding-bottom: 10px; margin-top: 0; font-size: 2em; }
-        h3 { color: #3498db; margin-top: 30px; border-left: 6px solid #3498db; padding-left: 15px; font-size: 1.5em; }
-        
-        /* --- 輔助教學區 --- */
-        .analogy { background-color: #ecf0f1; border-left: 5px solid #2ecc71; padding: 15px; border-radius: 8px; margin: 20px 0; font-style: italic; }
-        .data-structure-box { background-color: #fff0f5; border: 2px dashed #ff69b4; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: center; }
-        .complexity { background-color: #ffebcc; border-left: 5px solid #f39c12; font-weight: bold; padding: 15px; border-radius: 8px; margin: 20px 0; }
-        .application-example { border: 1px solid #ddd; padding: 20px; margin: 20px 0; border-radius: 8px; background-color: #f9f9f9; }
-
-        /* --- 視覺化區塊 --- */
-        .visualization-area { display: flex; flex-direction: column; align-items: center; padding: 20px; background-color: #fff8e1; border: 3px solid #f39c12; border-radius: 10px; }
-        #graphCanvas { border: 1px solid #aaa; background-color: white; margin-bottom: 20px; }
-        .controls { display: flex; gap: 15px; margin-bottom: 20px; align-items: center; }
-        .controls button { padding: 10px 20px; font-size: 1.1em; cursor: pointer; border: none; border-radius: 5px; transition: background-color 0.3s; }
-        #startDFS { background-color: #e74c3c; color: white; }
-        #startBFS { background-color: #3498db; color: white; }
-        #nextStep { background-color: #2ecc71; color: white; }
-        #resetBtn { background-color: #95a5a6; color: white; }
-        .status-panel { width: 100%; padding: 15px; background-color: #ecf0f1; border-radius: 5px; font-family: monospace; text-align: left; }
-        
-        /* --- 比較表格樣式 --- */
-        #comparison-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-        }
-        #comparison-table th, #comparison-table td {
-            border: 1px solid #ddd;
-            padding: 12px;
-            text-align: left;
-        }
-        #comparison-table th {
-            background-color: #34495e;
-            color: white;
-            font-weight: bold;
-        }
-        #comparison-table tr:nth-child(even) {
-            background-color: #f9f9f9;
+            border-bottom: 1px solid rgba(0, 243, 255, 0.1);
         }
 
-        /* --- 吉祥物樣式 --- */
-        #mascot-container { position: fixed; bottom: 20px; left: 20px; z-index: 2000; cursor: pointer; }
-        #mascot-container img {
-            width: 120px; height: 120px; 
-            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4)); 
-            transition: transform 0.1s, filter 0.3s;
+        h1 { 
+            font-family: 'Orbitron', sans-serif; 
+            margin: 0; 
+            font-size: 2rem; 
+            letter-spacing: 2px;
+            background: linear-gradient(90deg, var(--neon-blue), var(--text-main), var(--neon-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 10px rgba(0, 243, 255, 0.3);
         }
-        #mascot-container:hover img { 
-            filter: 
-                drop-shadow(0 0 5px #ff00ff) 
-                drop-shadow(0 0 15px #00ffff)
-                drop-shadow(0 0 25px #ff00ff)
-                drop-shadow(0 0 35px #00ffff);
-            transform: scale(1.1); 
-            animation: shake 0.5s infinite;
+
+        nav { margin-top: 15px; }
+        nav a { 
+            color: var(--text-muted); 
+            text-decoration: none; 
+            margin: 0 15px; 
+            font-size: 0.9rem; 
+            transition: 0.3s; 
+            position: relative;
         }
-        @keyframes shake { 0% { transform: translate(1px, 1px) rotate(0deg); } 100% { transform: translate(1px, -2px) rotate(-1deg); } }
+        nav a:hover { color: var(--neon-blue); text-shadow: 0 0 5px var(--neon-blue); }
+
+        /* --- Layout --- */
+        main { max-width: 1100px; margin: 40px auto; padding: 0 20px; flex: 1; }
+
+        /* --- 玻璃擬態卡片 --- */
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 15px;
+            padding: 2.5rem;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s;
+        }
         
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 3px; height: 100%;
+            background: linear-gradient(to bottom, var(--neon-blue), var(--neon-purple));
+        }
+
+        .card:hover { transform: translateY(-3px); box-shadow: 0 10px 40px rgba(0, 243, 255, 0.05); }
+
+        h2 { 
+            font-family: 'Orbitron', sans-serif; 
+            color: var(--neon-blue); 
+            border-bottom: 1px solid rgba(255,255,255,0.1); 
+            padding-bottom: 15px; 
+            margin-top: 0; 
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        h3 { color: var(--neon-purple); margin-top: 25px; font-size: 1.3rem; }
+        p { line-height: 1.8; color: #ccc; }
+        strong { color: var(--neon-green); }
+
+        /* --- 數據結構視覺化 --- */
+        .ds-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .ds-box {
+            background: rgba(0,0,0,0.3);
+            border: 1px dashed rgba(255,255,255,0.2);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .viz-queue { 
+            display: flex; justify-content: center; gap: 10px; margin-top: 15px; 
+        }
+        .viz-item {
+            background: rgba(255,255,255,0.1);
+            padding: 8px 15px;
+            border-radius: 5px;
+            border: 1px solid var(--neon-blue);
+            color: var(--neon-blue);
+            font-family: monospace;
+        }
+
+        /* --- Canvas 畫布 --- */
+        .canvas-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--neon-blue);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: inset 0 0 30px rgba(0, 243, 255, 0.1);
+        }
+        
+        #graphCanvas { width: 100%; max-width: 800px; height: auto; border-radius: 10px; }
+
+        /* --- 控制面板 --- */
+        .controls { 
+            display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; align-items: center; justify-content: center; width: 100%;
+        }
+
+        select {
+            background: #0a0b1e; color: var(--neon-blue); border: 1px solid var(--neon-blue);
+            padding: 10px; border-radius: 5px; font-family: 'Orbitron'; outline: none;
+        }
+
+        button {
+            background: rgba(0, 243, 255, 0.1);
+            color: var(--neon-blue);
+            border: 1px solid var(--neon-blue);
+            padding: 10px 25px;
+            font-size: 1rem;
+            font-family: 'Orbitron', sans-serif;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        button:hover:not(:disabled) {
+            background: var(--neon-blue); color: #000;
+            box-shadow: 0 0 15px var(--neon-blue);
+        }
+
+        button:disabled {
+            border-color: #444; color: #666; cursor: not-allowed; background: transparent;
+        }
+
+        /* 特別按鈕樣式 */
+        #startDFS { border-color: var(--neon-red); color: var(--neon-red); }
+        #startDFS:hover { background: var(--neon-red); color: #fff; box-shadow: 0 0 15px var(--neon-red); }
+
+        #startBFS { border-color: var(--neon-green); color: var(--neon-green); }
+        #startBFS:hover { background: var(--neon-green); color: #000; box-shadow: 0 0 15px var(--neon-green); }
+
+        /* --- 狀態面板 --- */
+        .status-panel {
+            width: 100%; margin-top: 20px; padding: 15px;
+            background: rgba(0,0,0,0.6); border-left: 4px solid var(--neon-orange);
+            border-radius: 5px; font-family: 'Courier New', monospace;
+        }
+        .status-label { color: var(--text-muted); font-size: 0.9rem; }
+        .status-val { color: var(--neon-orange); font-weight: bold; }
+
+        /* --- 表格樣式 --- */
+        .comparison-table {
+            width: 100%; border-collapse: collapse; margin-top: 20px;
+            color: #ddd;
+        }
+        .comparison-table th, .comparison-table td {
+            border: 1px solid rgba(255,255,255,0.1); padding: 15px; text-align: left;
+        }
+        .comparison-table th {
+            background: rgba(0, 243, 255, 0.1); color: var(--neon-blue);
+        }
+        .comparison-table tr:hover { background: rgba(255,255,255,0.05); }
+
+        /* --- 吉祥物 --- */
+        .mascot-container {
+            position: fixed; bottom: 20px; left: 20px; z-index: 2000; cursor: pointer; width: 120px;
+        }
+        .mascot-img {
+            width: 100%; height: auto; transition: 0.3s;
+            animation: float 3s ease-in-out infinite;
+            filter: drop-shadow(0 0 5px rgba(0,0,0,0.5));
+        }
+        .mascot-container:hover .mascot-img {
+            animation: shake 0.5s infinite, neon-pulse 1s infinite alternate;
+        }
+
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        @keyframes shake { 0% { transform: translate(1px, 1px) rotate(0deg); } 100% { transform: translate(-1px, -1px) rotate(-1deg); } }
+        @keyframes neon-pulse { from { filter: drop-shadow(0 0 5px var(--neon-blue)); } to { filter: drop-shadow(0 0 15px var(--neon-purple)); } }
+
         footer {
-            text-align: center; padding: 15px 0; background-color: #34495e; color: #bdc3c7; margin-top: 50px; font-size: 0.9em;
+            text-align: center; padding: 20px; color: #666; font-size: 0.9rem;
+            border-top: 1px solid rgba(255,255,255,0.05); margin-top: auto;
+        }
+
+        /* RWD */
+        @media (max-width: 768px) {
+            .ds-grid { grid-template-columns: 1fr; }
+            .controls { flex-direction: column; width: 100%; }
+            button, select { width: 100%; }
         }
     </style>
 </head>
 <body>
 
     <header>
-        <h1>超神系列－深度優先搜尋DFS與廣度優先搜尋BFS展演系統</h1>
+        <h1>超神系列 | DFS 與 BFS 演算法展演系統</h1>
         <nav>
-            <a href="#intro"><i class="fas fa-info-circle"></i> 簡介</a> |
-            <a href="#datastructures"><i class="fas fa-database"></i> 數據結構</a> |
-            <a href="#visualization"><i class="fas fa-eye"></i> 視覺化</a> |
-            <a href="#theory"><i class="fas fa-flask"></i> 理論與應用</a>
+            <a href="#intro"><i class="fas fa-info-circle"></i> 簡介</a>
+            <a href="#datastructures"><i class="fas fa-database"></i> 核心結構</a>
+            <a href="#visualization"><i class="fas fa-eye"></i> 視覺化實驗</a>
+            <a href="#theory"><i class="fas fa-flask"></i> 理論比較</a>
         </nav>
     </header>
 
     <main>
         
-        <!-- 1. 系統簡介 -->
-        <section id="intro">
-            <h2><i class="fas fa-hand-sparkles"></i> 演算法探索的起點：圖形遍歷</h2>
-            <p>圖形遍歷 (Graph Traversal) 是系統化地訪問圖中所有節點的過程。DFS (Depth-First Search) 和 BFS (Breadth-First Search) 是實現這一目標的兩種基本且強大的方法。</p>
+        <!-- 1. 簡介 -->
+        <section id="intro" class="card">
+            <h2><i class="fas fa-network-wired"></i> 圖形遍歷 (Graph Traversal)</h2>
+            <p>歡迎來到演算法的數位世界。在這裡，我們將探索兩個最經典的搜索程式：<strong>DFS (深度優先)</strong> 與 <strong>BFS (廣度優先)</strong>。想像你是一個網路爬蟲，這兩種方法決定了你如何在龐大的網路節點中移動。</p>
         </section>
 
-        <!-- 2. 數據結構基礎 -->
-        <section id="datastructures">
-            <h2><i class="fas fa-boxes"></i> 預備知識：Stack (LIFO) 與 Queue (FIFO)</h2>
-            <p>DFS 和 BFS 的運作方式，完全取決於它們用來儲存待訪問節點的數據結構。</p>
+        <!-- 2. 數據結構 -->
+        <section id="datastructures" class="card">
+            <h2><i class="fas fa-microchip"></i> 核心引擎：Stack vs Queue</h2>
+            <p>這兩種演算法的行為差異，完全取決於它們「暫存記憶體」的運作方式。</p>
 
-            <div class="data-structure-box">
-                <h3>堆疊 (Stack)：後進先出 (LIFO)</h3>
-                <p><strong>比喻：</strong> 像一疊盤子。最後放進去的 (L) 總是第一個被拿走 (F)。</p>
-                <div class="ds-container">
-                    <div class="stack-viz">
-                        <span class="ds-item" style="background-color: #2ecc71;">C (L) <i class="fas fa-arrow-down"></i></span>
-                        <span class="ds-item">B</span>
-                        <span class="ds-item" style="background-color: #f39c12;">A (F)</span>
+            <div class="ds-grid">
+                <div class="ds-box">
+                    <h3 style="color: var(--neon-red);"><i class="fas fa-layer-group"></i> 堆疊 (Stack)</h3>
+                    <p style="font-size: 0.9rem;"><strong>DFS 的核心 (LIFO)</strong></p>
+                    <div class="viz-queue" style="flex-direction: column-reverse; align-items: center;">
+                        <div class="viz-item" style="border-color: var(--neon-red); color: var(--neon-red);">數據 C (最新)</div>
+                        <div class="viz-item" style="border-color: #555; color: #777;">數據 B</div>
+                        <div class="viz-item" style="border-color: #555; color: #777;">數據 A (最舊)</div>
                     </div>
+                    <p style="font-size: 0.8rem; margin-top:10px;">"後進先出：像裝填子彈，最後裝的先擊發"</p>
                 </div>
-                <p><strong>DFS 核心：</strong> 利用 LIFO 特性，保證演算法會不斷探索當前路徑的深處。</p>
-            </div>
-            
-            <div class="data-structure-box">
-                <h3><i class="fas fa-users-line" style="color:#3498db;"></i> 佇列 (Queue)：先進先出 (FIFO)</h3>
-                <p><strong>比喻：</strong> 像排隊買飲料。最先排隊的 (F) 總是第一個買到飲料的 (F)。</p>
-                <div class="ds-container">
-                    <div class="queue-viz">
-                        <span class="ds-item" style="background-color: #e74c3c;">A (F) <i class="fas fa-arrow-right"></i></span>
-                        <span class="ds-item">B</span>
-                        <span class="ds-item" style="background-color: #2ecc71;"><i class="fas fa-arrow-left"></i> C (L)</span>
-                    </div>
-                </div>
-                <p><strong>BFS 核心：</strong> 利用 FIFO 特性，確保按層次、按距離的順序搜索，優先處理距離近的節點。</p>
-            </div>
-        </section>
-
-        <!-- 3. 視覺化展演區 -->
-        <section id="visualization">
-            <h2><i class="fas fa-project-diagram"></i> 視覺化實踐：無向圖的遍歷</h2>
-
-            <p>下方圖形與您的範例圖一致 (節點 A 到 F)。請選擇起點和演算法，並點擊「下一步」手動觀察遍歷過程。</p>
-            
-            <div class="visualization-area">
                 
+                <div class="ds-box">
+                    <h3 style="color: var(--neon-green);"><i class="fas fa-people-arrows"></i> 佇列 (Queue)</h3>
+                    <p style="font-size: 0.9rem;"><strong>BFS 的核心 (FIFO)</strong></p>
+                    <div class="viz-queue">
+                        <div class="viz-item" style="border-color: var(--neon-green); color: var(--neon-green);">數據 A</div>
+                        <div class="viz-item" style="border-color: #555; color: #777;">數據 B</div>
+                        <div class="viz-item" style="border-color: #555; color: #777;">數據 C</div>
+                    </div>
+                    <p style="font-size: 0.8rem; margin-top:10px;">"先進先出：像排隊買票，先來的先服務"</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. 視覺化展演 -->
+        <section id="visualization" class="card">
+            <h2><i class="fas fa-vr-cardboard"></i> 互動實驗室</h2>
+            <p>選擇起點與演算法，啟動掃描程序。觀察節點如何被點亮，以及連線如何傳導。</p>
+            
+            <div class="canvas-container">
                 <div class="controls">
-                    <!-- 選擇起點 (包含所有節點 A-F) -->
-                    <label for="startNodeSelect"><i class="fas fa-location-arrow"></i> 選擇起點:</label>
+                    <label><i class="fas fa-location-crosshairs"></i> 起點:</label>
                     <select id="startNodeSelect">
-                        <option value="A">A</option>
-                        <option value="B">B</option>
-                        <option value="C">C</option>
-                        <option value="D">D</option>
-                        <option value="E">E</option>
-                        <option value="F">F</option>
+                        <option value="A">節點 A</option>
+                        <option value="B">節點 B</option>
+                        <option value="C">節點 C</option>
+                        <option value="D">節點 D</option>
+                        <option value="E">節點 E</option>
+                        <option value="F">節點 F</option>
                     </select>
                     
-                    <button id="startDFS" onclick="startVisualization('DFS')"><i class="fas fa-angle-double-down"></i> 初始化 DFS</button>
-                    <button id="startBFS" onclick="startVisualization('BFS')"><i class="fas fa-expand-arrows-alt"></i> 初始化 BFS</button>
-                    <button id="nextStep" onclick="stepAlgorithm()" disabled><i class="fas fa-forward"></i> 下一步動畫</button>
-                    <button id="resetBtn" onclick="resetGraph()"><i class="fas fa-sync-alt"></i> 重置圖形</button>
+                    <button id="startDFS" onclick="startVisualization('DFS')"><i class="fas fa-bolt"></i> 啟動 DFS (深度)</button>
+                    <button id="startBFS" onclick="startVisualization('BFS')"><i class="fas fa-wifi"></i> 啟動 BFS (廣度)</button>
+                    <button id="nextStep" onclick="stepAlgorithm()" disabled><i class="fas fa-forward"></i> 下一步</button>
+                    <button id="resetBtn" onclick="resetGraph()"><i class="fas fa-rotate-right"></i> 系統重置</button>
                 </div>
 
-                <canvas id="graphCanvas" width="800" height="450">很抱歉，您的瀏覽器不支持 Canvas 繪圖。</canvas>
+                <canvas id="graphCanvas" width="800" height="450"></canvas>
 
                 <div class="status-panel">
-                    <strong>當前演算法：</strong> <span id="currentAlgo">N/A</span><br>
-                    <strong>當前狀態：</strong> <span id="currentStatus">請先選擇一個演算法並點擊「下一步」開始遍歷。</span><br>
-                    <strong>訪問順序：</strong> <span id="visitOrder"></span><hr>
-                    <strong>核心數據結構：</strong> <span id="dataStructure">[]</span>
+                    <div><span class="status-label">執行程序:</span> <span class="status-val" id="currentAlgo" style="color:var(--neon-blue)">待命</span></div>
+                    <div style="margin-top:5px;"><span class="status-label">系統狀態:</span> <span id="currentStatus" style="color:#fff;">請選擇模式</span></div>
+                    <div style="margin-top:5px;"><span class="status-label">掃描順序:</span> <span id="visitOrder" style="color:var(--neon-green); font-family: monospace;"></span></div>
+                    <div style="border-top: 1px dashed #444; margin-top:10px; padding-top:10px;">
+                        <span class="status-label">記憶體結構:</span> <span id="dataStructure" style="color:var(--neon-orange)">[]</span>
+                    </div>
                 </div>
             </div>
         </section>
 
-        <!-- 4. 理論與應用 -->
-        <section id="theory">
-            <h2><i class="fas fa-brain"></i> 理論與應用：DFS vs BFS 完整比較</h2>
+        <!-- 4. 理論比較 -->
+        <section id="theory" class="card">
+            <h2><i class="fas fa-scale-balanced"></i> 演算法分析矩陣</h2>
             
-            <h3><i class="fas fa-table"></i> 深度優先搜尋 (DFS) 與 廣度優先搜尋 (BFS) 比較表</h3>
-            <table id="comparison-table">
+            <table class="comparison-table">
                 <thead>
                     <tr>
                         <th>特徵</th>
-                        <th>深度優先搜尋 (DFS)</th>
-                        <th>廣度優先搜尋 (BFS)</th>
+                        <th><i class="fas fa-arrow-down"></i> DFS (深度優先)</th>
+                        <th><i class="fas fa-expand"></i> BFS (廣度優先)</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td><strong>核心數據結構</strong></td>
-                        <td>堆疊 (Stack) 或 遞迴 (LIFO)</td>
-                        <td>佇列 (Queue) (FIFO)</td>
+                        <td><strong>核心邏輯</strong></td>
+                        <td style="color:var(--neon-red)">一條路走到黑 (撞牆才回頭)</td>
+                        <td style="color:var(--neon-green)">地毯式搜索 (層層推進)</td>
                     </tr>
                     <tr>
-                        <td><strong>搜索策略</strong></td>
-                        <td>深入探險：盡可能沿著一條路徑走到最底。</td>
-                        <td>層次擴散：先訪問所有距離近的節點，再處理距離遠的。</td>
+                        <td><strong>數據結構</strong></td>
+                        <td>Stack (堆疊) / 遞迴</td>
+                        <td>Queue (佇列)</td>
                     </tr>
                     <tr>
-                        <td><strong>時間複雜度</strong></td>
-                        <td>O(V + E)</td>
-                        <td>O(V + E)</td>
+                        <td><strong>最短路徑?</strong></td>
+                        <td>不保證</td>
+                        <td><strong>保證</strong> (在無權重圖中)</td>
                     </tr>
                     <tr>
-                        <td><strong>空間複雜度 (記憶體)</strong></td>
-                        <td>O(深度) 或 O(V)。在樹狀或深層圖中更節省空間。</td>
-                        <td>O(V)。在寬廣圖中，佇列可能需要儲存大量節點，較耗空間。</td>
-                    </tr>
-                    <tr>
-                        <td><strong>最短路徑保證</strong></td>
-                        <td>否。</td>
-                        <td>是 (在無權圖中)。</td>
-                    </tr>
-                    <tr>
-                        <td><strong>主要應用</strong></td>
-                        <td>拓撲排序、迷宮求解、連通分量、生成樹。</td>
-                        <td>尋找最短距離、網路廣播、層次分析。</td>
+                        <td><strong>最佳應用</strong></td>
+                        <td>走迷宮、拓撲排序、判斷連通性</td>
+                        <td>導航系統 (GPS)、社交網路好友推薦</td>
                     </tr>
                 </tbody>
             </table>
-            
-            <h3>應用案例解析</h3>
-            <div class="application-example">
-                <h4><i class="fas fa-door-open"></i> DFS 應用：電子迷宮求解</h4>
-                <p>當你在設計一個迷宮遊戲時，DFS 能迅速找到一條從起點到終點的路徑。它的優勢在於：不用記住太多岔路口（省空間），只需一條路走到底。</p>
-            </div>
-            
-            <div class="application-example">
-                <h4><i class="fas fa-route"></i> BFS 應用：交通導航的最少轉彎</h4>
-                <p>在城市地圖中，如果每條路段距離相同，BFS 總是能先找到需要最少轉彎次數（最短距離層次）的路線。這是因為 BFS 確保了它不會錯過任何距離更近的節點。</p>
-            </div>
         </section>
 
     </main>
 
-    <!-- 吉祥物區塊 -->
-    <div id="mascot-container">
-        <img src="image/LiyuChillGuy.svg" alt="吉祥物：LiyuChillGuy">
+    <!-- 吉祥物 -->
+    <div class="mascot-container">
+        <!-- 確保 image/LiyuChillGuy.svg 存在 -->
+        <img src="image/LiyuChillGuy.svg" alt="LiyuChillGuy" class="mascot-img">
     </div>
 
-    <!-- 頁面腳註 -->
     <footer>
-        <p>Copyright © Liyuchiutiger Gongminshen</p>
+        Copyright © Liyuchiutiger Gongminshen
     </footer>
 
-    <!-- JavaScript 視覺化邏輯 (使用修正後的圖結構) -->
+    <!-- JS 邏輯 -->
     <script>
         const canvas = document.getElementById('graphCanvas');
         const ctx = canvas.getContext('2d');
         const NODE_RADIUS = 25;
 
-        // 圖結構 (根據提供的圖片定義座標和連接)
+        // 圖結構數據
         const graphData = {
             'A': { x: 100, y: 200, neighbors: ['B', 'C'] },
             'B': { x: 250, y: 100, neighbors: ['A', 'C', 'D'] },
@@ -286,44 +409,77 @@
         let currentAlgorithm = null;
         let visitOrder = [];
 
-        // 顏色定義
-        const COLOR_DEFAULT = '#3498db'; 
-        const COLOR_VISITED = '#2ecc71'; 
-        const COLOR_ACTIVE = '#e74c3c'; 
-        const COLOR_QUEUE = '#f39c12'; 
+        // 霓虹配色定義
+        const COLOR_DEFAULT_STROKE = '#00f3ff'; // 藍色
+        const COLOR_DEFAULT_FILL = 'rgba(0, 243, 255, 0.1)';
+        
+        const COLOR_VISITED_STROKE = '#0aff68'; // 綠色
+        const COLOR_VISITED_FILL = 'rgba(10, 255, 104, 0.2)';
+        
+        const COLOR_ACTIVE_STROKE = '#ff4757'; // 紅色 (當前焦點)
+        const COLOR_ACTIVE_FILL = 'rgba(255, 71, 87, 0.3)';
+        
+        const COLOR_QUEUE_STROKE = '#ff9f43'; // 橘色 (待辦)
+        const COLOR_QUEUE_FILL = 'rgba(255, 159, 67, 0.2)';
 
-        /* --- 繪圖函數 --- */
-        function drawNode(key, stateColor) {
+        /* --- 繪圖函數 (Cyberpunk 風格) --- */
+        function drawNode(key, strokeColor, fillColor, isGlowing = false) {
             const node = graphData[key];
+            
             ctx.beginPath();
             ctx.arc(node.x, node.y, NODE_RADIUS, 0, Math.PI * 2);
-            ctx.fillStyle = stateColor;
+            
+            // 發光特效
+            if (isGlowing) {
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = strokeColor;
+            } else {
+                ctx.shadowBlur = 0;
+            }
+
+            ctx.fillStyle = fillColor;
             ctx.fill();
-            ctx.strokeStyle = '#2c3e50';
+            ctx.strokeStyle = strokeColor;
             ctx.lineWidth = 3;
             ctx.stroke();
-            ctx.fillStyle = 'white';
+
+            // 重置陰影以免影響文字
+            ctx.shadowBlur = 0;
+
+            ctx.fillStyle = '#ffffff';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.font = 'bold 16px Arial';
+            ctx.font = 'bold 18px "Orbitron", sans-serif';
             ctx.fillText(key, node.x, node.y);
         }
 
         function drawEdge(nodeKey1, nodeKey2) {
             const n1 = graphData[nodeKey1];
             const n2 = graphData[nodeKey2];
+            
             ctx.beginPath();
             ctx.moveTo(n1.x, n1.y);
             ctx.lineTo(n2.x, n2.y);
-            ctx.strokeStyle = '#bdc3c7';
-            ctx.lineWidth = 2;
+            
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)'; // 預設暗淡連線
+            ctx.lineWidth = 1;
+            
+            // 如果兩端都訪問過，連線變亮
+            if (visited.has(nodeKey1) && visited.has(nodeKey2)) {
+                 ctx.strokeStyle = 'rgba(10, 255, 104, 0.6)'; // 綠色連線
+                 ctx.lineWidth = 2;
+                 ctx.shadowBlur = 10;
+                 ctx.shadowColor = '#0aff68';
+            }
+            
             ctx.stroke();
+            ctx.shadowBlur = 0; // Reset
         }
 
         function drawGraph() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // 繪製邊 (無向圖，只繪製一次)
+            // 1. 繪製連線
             const drawnEdges = new Set();
             for (const key in graphData) {
                 graphData[key].neighbors.forEach(neighborKey => {
@@ -335,57 +491,81 @@
                 });
             }
 
-            // 繪製節點
+            // 2. 繪製節點
             for (const key in graphData) {
-                let color = COLOR_DEFAULT;
+                let stroke = COLOR_DEFAULT_STROKE;
+                let fill = COLOR_DEFAULT_FILL;
+                let glow = false;
+
                 if (visited.has(key)) {
-                    color = COLOR_VISITED;
+                    stroke = COLOR_VISITED_STROKE;
+                    fill = COLOR_VISITED_FILL;
                 }
                 
                 if (traversalQueue.includes(key)) {
-                    color = COLOR_QUEUE;
+                    stroke = COLOR_QUEUE_STROKE;
+                    fill = COLOR_QUEUE_FILL;
                 }
 
+                // 判斷當前正要處理的節點
                 let nextNode = traversalQueue.length > 0 ? 
                                (currentAlgorithm === 'BFS' ? traversalQueue[0] : traversalQueue[traversalQueue.length - 1]) : null;
 
                 if (key === nextNode) {
-                    color = COLOR_ACTIVE;
+                    stroke = COLOR_ACTIVE_STROKE;
+                    fill = COLOR_ACTIVE_FILL;
+                    glow = true; // 只有當前節點發光
                 }
 
-                drawNode(key, color);
+                drawNode(key, stroke, fill, glow);
             }
         }
         
-        /* --- 狀態更新函數 --- */
+        /* --- 狀態與邏輯 --- */
         function updateStatus() {
-            document.getElementById('currentAlgo').innerText = currentAlgorithm || 'N/A';
-            document.getElementById('currentStatus').innerText = 
-                traversalQueue.length > 0 ? '準備處理下一個節點，請點擊「下一步」' : (currentAlgorithm ? `${currentAlgorithm} 遍歷完成！` : '請先選擇一個演算法。');
+            const algoLabel = document.getElementById('currentAlgo');
+            const statusText = document.getElementById('currentStatus');
+            
+            algoLabel.innerText = currentAlgorithm || '待命';
+            
+            if (traversalQueue.length > 0) {
+                statusText.innerText = '運算中... 請點擊「下一步」';
+                statusText.style.color = 'var(--neon-blue)';
+            } else if (currentAlgorithm) {
+                statusText.innerText = '掃描完成。';
+                statusText.style.color = 'var(--neon-green)';
+            } else {
+                statusText.innerText = '請選擇模式';
+            }
             
             let displayQueue = [...traversalQueue]; 
+            const dsElement = document.getElementById('dataStructure');
 
             if (currentAlgorithm === 'DFS') {
-                document.getElementById('dataStructure').innerHTML = 
-                    `<strong>Stack (LIFO)</strong>: [${displayQueue.reverse().join(', ')}] <br>(下一個彈出: ${traversalQueue[traversalQueue.length - 1] || 'N/A'})`;
+                dsElement.innerHTML = 
+                    `STACK: [${displayQueue.join(', ')}] <span style="color:#666">← TOP</span>`;
             } else if (currentAlgorithm === 'BFS') {
-                 document.getElementById('dataStructure').innerHTML = 
-                    `<strong>Queue (FIFO)</strong>: [${displayQueue.join(', ')}] <br>(下一個出隊: ${traversalQueue[0] || 'N/A'})`;
+                 dsElement.innerHTML = 
+                    `QUEUE: <span style="color:#666">OUT ←</span> [${displayQueue.join(', ')}] <span style="color:#666">← IN</span>`;
             } else {
-                 document.getElementById('dataStructure').innerHTML = '[]';
+                 dsElement.innerHTML = '[]';
             }
             
             document.getElementById('visitOrder').innerText = visitOrder.join(' → ');
             drawGraph();
             
-            // 啟用/禁用下一步按鈕
-            document.getElementById('nextStep').disabled = traversalQueue.length === 0;
-            if (currentAlgorithm === null) {
-                 document.getElementById('nextStep').disabled = true;
+            // 按鈕狀態
+            const nextBtn = document.getElementById('nextStep');
+            nextBtn.disabled = traversalQueue.length === 0;
+            
+            // 如果可以下一步，給按鈕加強烈發光效果
+            if (!nextBtn.disabled) {
+                nextBtn.style.boxShadow = "0 0 15px var(--neon-blue)";
+            } else {
+                nextBtn.style.boxShadow = "none";
             }
         }
 
-        /* --- 步進函數 (手動控制) --- */
         function stepAlgorithm() {
             if (traversalQueue.length === 0) {
                 updateStatus();
@@ -410,18 +590,18 @@
 
             const neighbors = graphData[currentNodeKey].neighbors;
             
-            // 找出未訪問且不在隊列/堆棧中的鄰居，並按字母序排序
+            // 排序並過濾
             const unvisitedNeighbors = neighbors
                 .filter(n => !visited.has(n) && !traversalQueue.includes(n))
                 .sort(); 
 
             if (currentAlgorithm === 'DFS') {
-                 // LIFO 策略：將鄰居逆序推入 Stack (確保字母序第一個先被 pop)
+                 // DFS (Stack): 逆序推入，讓字母序小的在 Top
                  unvisitedNeighbors.slice().reverse().forEach(neighborKey => { 
                     traversalQueue.push(neighborKey);
                 });
             } else if (currentAlgorithm === 'BFS') {
-                // FIFO 策略：將鄰居順序加入 Queue
+                // BFS (Queue): 順序推入
                 unvisitedNeighbors.forEach(neighborKey => {
                     traversalQueue.push(neighborKey);
                 });
@@ -430,33 +610,26 @@
             updateStatus();
         }
 
-        /* --- 控制函數 --- */
         function resetGraph() {
             visited = new Set();
             traversalQueue = [];
             currentAlgorithm = null;
             visitOrder = [];
-            document.getElementById('currentAlgo').innerText = 'N/A';
-            document.getElementById('currentStatus').innerText = '已重置。請選擇一個演算法。';
-            document.getElementById('dataStructure').innerHTML = '[]';
             document.getElementById('visitOrder').innerText = '';
-            document.getElementById('nextStep').disabled = true;
-            drawGraph();
+            updateStatus();
         }
 
         function startVisualization(algorithm) {
             resetGraph();
             currentAlgorithm = algorithm;
-            
             const startNode = document.getElementById('startNodeSelect').value;
-            
             traversalQueue.push(startNode);
-            document.getElementById('nextStep').disabled = false;
-            
             updateStatus();
         }
         
+        // 初始化
         window.onload = drawGraph;
+        window.onresize = drawGraph; // 簡單的響應式重繪
     </script>
 </body>
 </html>
